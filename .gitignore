@@ -1,0 +1,17 @@
+# Ignore node_modules folders
+**/node_modules/
+
+# Ignore package-lock.json files
+**/package-lock.json
+
+# Ignore dist directory
+dist/
+
+# Ignore log and cache files
+*.log
+*.cache
+
+# Ignore environment-specific configuration files
+config/*.json
+config/*.env
+
