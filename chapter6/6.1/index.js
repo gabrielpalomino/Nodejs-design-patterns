@@ -1,6 +1,6 @@
 import fs from "fs";
 import zlib from "zlib";
-import { pipeline, Transform } from "stream";
+import { pipeline, Transform, PassThrough } from "stream";
 import { promisify } from "util";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
@@ -29,11 +29,13 @@ class Accumulator extends Transform {
   }
 }
 
-async function compressFile(inputFile, algorithm) {
+async function compressFile(inputFile, inputStream, algorithm) {
   const compressor = zlib[algorithm]();
   const accumulator = new Accumulator();
+  const passThroughStream = new PassThrough();
+  inputStream.pipe(passThroughStream);
   const startTime = Date.now();
-  await pipe(fs.createReadStream(inputFile), compressor, accumulator);
+  await pipe(passThroughStream, compressor, accumulator);
   const endTime = Date.now();
   const inputSize = fs.statSync(inputFile).size;
   const compressedSize = accumulator.totalSize;
@@ -56,8 +58,9 @@ async function main() {
 
   try {
     const algorithms = ["createBrotliCompress", "createDeflate", "createGzip"];
+    const inputStream = fs.createReadStream(inputFile);
     const results = await Promise.all(
-      algorithms.map((algorithm) => compressFile(inputFile, algorithm))
+      algorithms.map((algorithm) => compressFile(inputFile, inputStream, algorithm))
     );
     console.table(results, [
       "algorithm",
@@ -73,5 +76,3 @@ async function main() {
 }
 
 main();
-
-
